@@ -16,7 +16,7 @@ def _create_multi_input_math_node(node_type: str, inputs: list[Union[str, int, f
     node = cmds.createNode(node_type)
     for i, input in enumerate(inputs):
         if matrix:
-            cmds.setAttr(f'{node}.matrixIn[{i}]', input, type='matrix')
+            connect_or_set_input_attr(node, input, f'matrixIn[{i}]', is_matrix=True)
         else:
             connect_or_set_input_attr(node, input, f'input[{i}]')
     
@@ -588,4 +588,5 @@ def create_distanceBetween_node(start, end, targets: list[str]=None):
     for target in targets:
         cmds.connectAttr(f'{node}.distance', target)
     
+
     return node
