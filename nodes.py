@@ -109,6 +109,7 @@ def _ensure_is_list(var: any):
     elif isinstance(var, str):
         return [var]
     return var
+
 ########## Comparison ##########
 
 def create_and_node(input: list[Union[str, int, float]], targets: list[str]=None):
@@ -157,27 +158,27 @@ def create_divide_node(inputs: list[Union[str, int, float]], targets: list[str]=
     return _create_multi_input_math_node('divide', inputs, targets)
 
 
-def create_inverseLerp_node(inputs: list[Union[str, int, float]], targets: list[str]=None, interpolation=0):
+def create_inverseLerp_node(inputs: list[Union[str, int, float]], targets: list[str]=None, interpolation: Union[str, int, float]=0):
     node = _create_dual_input_math_node('inverseLerp', inputs, targets)
-    cmds.setAttr(f'{node}.interpolation', interpolation)
+    _connect_or_set_input_attr(node, interpolation, 'interpolation')
     return node
 
 
-def create_lerp_node(inputs: list[Union[str, int, float]], targets: list[str]=None, weight=0):
+def create_lerp_node(inputs: list[Union[str, int, float]], targets: list[str]=None, weight: Union[str, int, float]=0):
     node = _create_dual_input_math_node('lerp', inputs, targets)
-    cmds.setAttr(f'{node}.weight', weight)
+    _connect_or_set_input_attr(node, weight, 'weight')
     return node
 
 
-def create_log_node(input: Union[str, float, int], targets: list[str]=None, base=2):
+def create_log_node(input: Union[str, float, int], targets: list[str]=None, base: Union[str, int, float]=2):
     node = _create_single_input_math_node('log', input, targets)
-    cmds.setAttr(f'{node}.base', base)
+    _connect_or_set_input_attr(node, base, 'base')
     return node
 
 
-def create_modulo_node(input: Union[str, float, int], targets: list[str]=None, modulus=1):
+def create_modulo_node(input: Union[str, float, int], targets: list[str]=None, modulus: Union[str, int, float]=1):
     node = _create_single_input_math_node('modulo', input, targets)
-    cmds.setAttr(f'{node}.modulus', modulus)
+    _connect_or_set_input_attr(node, modulus, 'modulus')
     return node
 
 
@@ -189,9 +190,9 @@ def create_negate_node(input: Union[str, float, int], targets: list[str]=None):
     return _create_single_input_math_node('negate', input, targets)
 
 
-def create_power_node(input: Union[str, float, int], targets: list[str]=None, exponent=2):
+def create_power_node(input: Union[str, float, int], targets: list[str]=None, exponent: Union[str, int, float]=2):
     node = _create_single_input_math_node('power', input, targets)
-    cmds.setAttr(f'{node}.exponent', exponent)
+    _connect_or_set_input_attr(node, exponent, 'exponent')
     return node
 
 
@@ -209,10 +210,10 @@ def create_ceil_node(input: Union[str, float, int], targets: list[str]=None):
     return _create_single_input_math_node('ceil', input, targets)
 
 
-def create_clampRange_node(input: Union[str, float, int], targets: list[str]=None, minimum=0, maximum=1):
+def create_clampRange_node(input: Union[str, float, int], targets: list[str]=None, minimum: Union[str, float, int]=0, maximum: Union[str, float, int]=1):
     node = _create_single_input_math_node('clampRange', input, targets)
-    cmds.setAttr(f'{node}.minimum', minimum)
-    cmds.setAttr(f'{node}.maximum', maximum)
+    _connect_or_set_input_attr(node, minimum, 'minimum')
+    _connect_or_set_input_attr(node, maximum, 'maximum')
     return node
 
 
@@ -224,10 +225,10 @@ def create_round_node(input: Union[str, float, int], targets: list[str]=None):
     return _create_single_input_math_node('round', input, targets)
 
 
-def create_smoothStep_node(input: Union[str, float, int], targets: list[str]=None, leftEdge=0, rightEdge=1):
+def create_smoothStep_node(input: Union[str, float, int], targets: list[str]=None, leftEdge: Union[str, float, int]=0, rightEdge: Union[str, float, int]=1):
     node = _create_single_input_math_node('smoothStep', input, targets)
-    cmds.setAttr(f'{node}.leftEdge', leftEdge)
-    cmds.setAttr(f'{node}.rightEdge', rightEdge)
+    _connect_or_set_input_attr(node, leftEdge, 'leftEdge')
+    _connect_or_set_input_attr(node, rightEdge, 'rightEdge')
     return node
 
 
@@ -312,7 +313,7 @@ def create_blendMatrix_node(input: Union[str, list[int]], target_matrix: Union[s
     return node
 
 
-def create_columnFromMatrix_node(in_matrix: Union[str, list[int]], targets: list[str]=None, input=0):
+def create_columnFromMatrix_node(in_matrix: Union[str, list[int]], targets: list[str]=None, input: int=0):
     node = _create_single_input_math_node('columnFromMatrix', in_matrix, in_matrix=True)
     cmds.setAttr(f'{node}.input', input)
     _set_xyz_outputs(node, targets, add_w=True)
@@ -455,7 +456,7 @@ def create_parentMatrix_node(
             if not source_attr_set:
                 continue
             for i, source_attr in enumerate(source_attr_set):
-                _connect_or_set_input_attr(node, in_matrix, f'target[{i}].{dest_attr}', in_matrix=True)
+                _connect_or_set_input_attr(node, in_matrix, f'target[{i}].{dest_attr}', in_matrix: bool=True)
     
     for target in targets:
         cmds.connectAttr(f'{node}.outputMatrix', target)
@@ -463,14 +464,14 @@ def create_parentMatrix_node(
     return node
 
 
-def create_passMatrix_node(input: Union[str, list[int]], targets: list[str]=None, in_scale=2):
+def create_passMatrix_node(input: Union[str, list[int]], targets: list[str]=None, in_scale: Union[str, int, float]=2):
     node = _create_single_input_math_node(input, targets, in_matrix=True)
     cmds.setAttr(f'{node}.inScale', in_scale)
 
     return node
 
 
-def create_pickMatrix_node(in_matrix: Union[str, list[int]]=None, targets: list[str]=None, scale=True, rotate=True, translate=True, shear=True):
+def create_pickMatrix_node(in_matrix: Union[str, list[int]]=None, targets: list[str]=None, scale: bool=True, rotate: bool=True, translate: bool=True, shear: bool=True):
     targets = _ensure_is_list(targets)
 
     node = cmds.createNode('pickMatrix')
@@ -486,7 +487,7 @@ def create_pickMatrix_node(in_matrix: Union[str, list[int]]=None, targets: list[
     return node
 
 
-def create_pointMatrixMult_node(input: Union[str, list[int]], in_point: list[Union[str, int, float]], targets: list[str]=None, vector_multiply=False):
+def create_pointMatrixMult_node(input: Union[str, list[int]], in_point: list[Union[str, int, float]], targets: list[str]=None, vector_multiply: bool=False):
     node = _create_single_input_math_node('pointMatrixMult', input, targets, in_matrix=True)
     for point, xyz in zip(in_point, 'XYZ'):
         _connect_or_set_input_attr(node, point, f'inPoint{xyz}')
@@ -502,9 +503,9 @@ def create_rotationFromMatrix_node(in_matrix: Union[str, list[int]], targets: li
     return node
 
 
-def create_rowFromMatrix_node(in_matrix: Union[str, list[int]], targets: list[str]=None, input=0):
+def create_rowFromMatrix_node(in_matrix: Union[str, list[int]], targets: list[str]=None, input: Union[str, int, float]=0):
     node = _create_single_input_math_node('rowFromMatrix', in_matrix, in_matrix=True)
-    cmds.setAttr(f'{node}.input', input)
+    _connect_or_set_input_attr(node, input, 'input')
     _set_xyz_outputs(node, targets, add_w=True)
 
     return node
