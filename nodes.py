@@ -16,9 +16,9 @@ def _create_multi_input_math_node(node_type: str, inputs: list[Union[str, int, f
     node = cmds.createNode(node_type)
     for i, input in enumerate(inputs):
         if matrix:
-            connect_or_set_input_attr(node, input, f'matrixIn[{i}]', is_matrix=True)
+            _connect_or_set_input_attr(node, input, f'matrixIn[{i}]', is_matrix=True)
         else:
-            connect_or_set_input_attr(node, input, f'input[{i}]')
+            _connect_or_set_input_attr(node, input, f'input[{i}]')
     
     for target in targets:
         cmds.connectAttr(f'{node}.output', target)
@@ -34,7 +34,7 @@ def _create_xyz_input_math_node(node_type: str, inputX: Union[str, float, int]=0
 
     node = cmds.creaeNode(node_type)
     for input, attr in zip((inputX, inputY, inputZ), ('inputX', 'inputY', 'inputZ')):
-        connect_or_set_input_attr(node, input, attr)
+        _connect_or_set_input_attr(node, input, attr)
 
     if targets:
         obj, attr = targets[0].split('.')
@@ -55,7 +55,7 @@ def _create_dual_input_math_node(node_type: str, input1: Union[str, float, int],
 
     node = cmds.createNode(node_type)
     for input, attr in zip((input1, input2), ('input1', 'input2')):
-        connect_or_set_input_attr(node, input, attr)
+        _connect_or_set_input_attr(node, input, attr)
     
     for target in targets:
         cmds.connectAttr(f'{node}.output', target)
@@ -100,7 +100,7 @@ def _set_xyz_outputs(node: str, targets: list[str], add_w_output: bool=False):
             cmds.connectAttr(f'{node}.output{axis}', target)
 
 
-def connect_or_set_input_attr(node: str, source_attr: Union[str, int, float, list[int]], dest_attr: str, is_matrix: bool=False):
+def _connect_or_set_input_attr(node: str, source_attr: Union[str, int, float, list[int]], dest_attr: str, is_matrix: bool=False):
     if isinstance(source_attr, str):
         cmds.connectAttr(source_attr, node + '.' + dest_attr)
     elif is_matrix:
@@ -264,18 +264,18 @@ def create_aimMatrix_node(
     if targets is None:
         targets = []
     node = cmds.createNode('aimMatrix')
-    connect_or_set_input_attr(node, input_matrix, 'inputMatrix', is_matrix=True)
-    connect_or_set_input_attr(node, primary_target_matrix, 'primary.primaryTargetMatrix', is_matrix=True)
-    connect_or_set_input_attr(node, secondary_target_matrix, 'secondary.secondaryTargetMatrix', is_matrix=True)
+    _connect_or_set_input_attr(node, input_matrix, 'inputMatrix', is_matrix=True)
+    _connect_or_set_input_attr(node, primary_target_matrix, 'primary.primaryTargetMatrix', is_matrix=True)
+    _connect_or_set_input_attr(node, secondary_target_matrix, 'secondary.secondaryTargetMatrix', is_matrix=True)
     for i, axis in enumerate('XYZ'):
-        connect_or_set_input_attr(node, primary_input_axis[i], f'primaryInputAxis{axis}')
-        connect_or_set_input_attr(node, primary_target_vector[i], f'primaryTargetVector{axis}')
-        connect_or_set_input_attr(node, secondary_input_axis[i], f'seocndaryInputAxis{axis}')
-        connect_or_set_input_attr(node, secondary_target_vector[i], f'secondaryTargetVector{axis}')
+        _connect_or_set_input_attr(node, primary_input_axis[i], f'primaryInputAxis{axis}')
+        _connect_or_set_input_attr(node, primary_target_vector[i], f'primaryTargetVector{axis}')
+        _connect_or_set_input_attr(node, secondary_input_axis[i], f'seocndaryInputAxis{axis}')
+        _connect_or_set_input_attr(node, secondary_target_vector[i], f'secondaryTargetVector{axis}')
     cmds.setAttr(f'{node}.primaryMode', primary_mode)
     cmds.setAttr(f'{node}.secondaryMode', secondary_mode)
-    connect_or_set_input_attr(node, pre_space_matrix, 'preSpaceMatrix', is_matrix=True)
-    connect_or_set_input_attr(node, post_space_matrix, 'postSpaceMatrix', is_matrix=True)
+    _connect_or_set_input_attr(node, pre_space_matrix, 'preSpaceMatrix', is_matrix=True)
+    _connect_or_set_input_attr(node, post_space_matrix, 'postSpaceMatrix', is_matrix=True)
 
     for target in targets:
         cmds.connectAttr(f'{node}.outputMatrix', target)
@@ -298,15 +298,15 @@ def create_blendMatrix_node(input: Union[str, list[int]], target_matrix: Union[s
         targets = []
 
     node = cmds.createNode('blendMatrix')
-    connect_or_set_input_attr(node, input, 'inputMatrix', is_matrix=True)
+    _connect_or_set_input_attr(node, input, 'inputMatrix', is_matrix=True)
 
     for i, matrix in enumerate(target_matrix):
-        connect_or_set_input_attr(node, matrix, f'target[{i}].targetMatrix', is_matrix=True)
+        _connect_or_set_input_attr(node, matrix, f'target[{i}].targetMatrix', is_matrix=True)
 
     if pre_space_matrix:
-        connect_or_set_input_attr(node, pre_space_matrix, 'preSpaceMatrix', is_matrix=True)
+        _connect_or_set_input_attr(node, pre_space_matrix, 'preSpaceMatrix', is_matrix=True)
     if post_space_matrix:
-        connect_or_set_input_attr(node, post_space_matrix, 'postSpaceMatrix', is_matrix=True)
+        _connect_or_set_input_attr(node, post_space_matrix, 'postSpaceMatrix', is_matrix=True)
 
     for target in targets:
         cmds.connectAttr(f'{node}.outputMatrix', target)
@@ -325,8 +325,8 @@ def create_columnFromMatrix_node(in_matrix: Union[str, list[int]], targets: list
 def create_crossProduct_node(input1: list[Union[str, int, float]], input2: list[Union[str, int, float]], targets: str):
     node = cmds.createNode('crossProduct')
     for in_1, in_2, xyz in zip(input1, input2, 'XYZ'):
-        connect_or_set_input_attr(node, in_1, f'input1{xyz}')
-        connect_or_set_input_attr(node, in_2, f'input2{xyz}')
+        _connect_or_set_input_attr(node, in_1, f'input1{xyz}')
+        _connect_or_set_input_attr(node, in_2, f'input2{xyz}')
 
     _set_xyz_outputs(node, targets)
 
@@ -361,8 +361,8 @@ def create_determinant_node(input: Union[str, list[int]], targets: list[str]=Non
 def create_dotProduct_node(input1: list[Union[str, int, float]], input2: list[Union[str, int, float]], targets: list[str]):
     node = cmds.createNode('dotProduct')
     for in_1, in_2, xyz in zip(input1, input2, 'XYZ'):
-        connect_or_set_input_attr(node, in_1, f'input1{xyz}')
-        connect_or_set_input_attr(node, in_2, f'input2{xyz}')
+        _connect_or_set_input_attr(node, in_1, f'input1{xyz}')
+        _connect_or_set_input_attr(node, in_2, f'input2{xyz}')
 
     _set_xyz_outputs(node, targets)
 
@@ -380,7 +380,7 @@ def create_fourByFourMatrix_node(inputs: list[Union[str, int]], targets: list[st
         for j in range(4):
             if input_index == len(inputs):
                 break
-            connect_or_set_input_attr(node, inputs[input_index], f'{i}{j}')
+            _connect_or_set_input_attr(node, inputs[input_index], f'{i}{j}')
             input_index += 1
     for target in targets:
         cmds.connectAttr(f'{node}.output', target)
@@ -397,7 +397,7 @@ def create_inverseMatrix_node(input: Union[str, list[int]], targets: list[str]=N
         targets = []
 
     node = cmds.createNode('inverseMatrix')
-    connect_or_set_input_attr(node, input, 'inputMatrix')
+    _connect_or_set_input_attr(node, input, 'inputMatrix')
     for target in targets:
         cmds.connectAttr(f'{node}.outputMatrix', target)
 
@@ -408,7 +408,7 @@ def create_inverseMatrix_node(input: Union[str, list[int]], targets: list[str]=N
 def create_multiplyPointByMatrix_node(inputs: list[Union[str, int, float]], matrix: Union[str, list[int]], targets: list[str]=None):
     node = _create_single_input_math_node('multiplyPointByMatrix', matrix, in_matrix=True)
     for input, xyz in zip(inputs, 'XYZ'):
-        connect_or_set_input_attr(node, input, f'input{xyz}')
+        _connect_or_set_input_attr(node, input, f'input{xyz}')
 
     _set_xyz_outputs(node, targets)
 
@@ -420,7 +420,7 @@ def create_multiplyVectorByMatrix(inputs: list[Union[str, int, float]], matrix: 
         targets = []
     node = _create_single_input_math_node('multiplyVectorByMatrix', matrix, in_matrix=True)
     for input, xyz in zip(inputs, 'XYZ'):
-        connect_or_set_input_attr(node, input, f'input{xyz}')
+        _connect_or_set_input_attr(node, input, f'input{xyz}')
 
     _set_xyz_outputs(node, targets)
 
@@ -454,7 +454,7 @@ def create_parentMatrix_node(
     node = cmds.createNode('parentMatrix')
     # single input attrs
     for source_attr, dest_attr in zip((in_matrix, 'inputMatrix'), (pre_space_matrix, 'preSpaceMatrix'), (post_space_matrix, 'postSpaceMatrix')):
-        connect_or_set_input_attr(node, source_attr, dest_attr)
+        _connect_or_set_input_attr(node, source_attr, dest_attr)
 
     # multi input attrs
     for source_dest_attrs in (in_target_matrices, 'targetMatrix'), (in_offset_matrices, 'offsetMatrix'), (in_weights, 'weight'):
@@ -462,7 +462,7 @@ def create_parentMatrix_node(
             if not source_attr_set:
                 continue
             for i, source_attr in enumerate(source_attr_set):
-                connect_or_set_input_attr(node, in_matrix, f'target[{i}].{dest_attr}', in_matrix=True)
+                _connect_or_set_input_attr(node, in_matrix, f'target[{i}].{dest_attr}', in_matrix=True)
     
     for target in targets:
         cmds.connectAttr(f'{node}.outputMatrix', target)
@@ -487,7 +487,7 @@ def create_pickMatrix_node(in_matrix: Union[str, list[int]]=None, targets: list[
     cmds.setAttr(f'{node}.translate', translate)
     cmds.setAttr(f'{node}.shear', shear)
     if in_matrix:
-        connect_or_set_input_attr(node, in_matrix, 'inputMatrix', in_matrix=True)
+        _connect_or_set_input_attr(node, in_matrix, 'inputMatrix', in_matrix=True)
     for target in targets:
         cmds.connectAttr(f'{node}.outputMatrix', target)
 
@@ -497,7 +497,7 @@ def create_pickMatrix_node(in_matrix: Union[str, list[int]]=None, targets: list[
 def create_pointMatrixMult_node(input: Union[str, list[int]], in_point: list[Union[str, int, float]], targets: list[str]=None, vector_multiply=False):
     node = _create_single_input_math_node('pointMatrixMult', input, targets, in_matrix=True)
     for point, xyz in zip(in_point, 'XYZ'):
-        connect_or_set_input_attr(node, point, f'inPoint{xyz}')
+        _connect_or_set_input_attr(node, point, f'inPoint{xyz}')
     cmds.setAttr(f'{node}.vectorMultiply', vector_multiply)
 
     return node
@@ -590,3 +590,4 @@ def create_distanceBetween_node(start, end, targets: list[str]=None):
     
 
     return node
+
