@@ -8,10 +8,8 @@ import maya.cmds as cmds
 ########## Universal helper functions ##########
 
 def _create_multi_input_math_node(node_type: str, inputs: list[Union[str, int, float]], targets: list[str]=None, matrix: bool=False):
-    if not isinstance(inputs, tuple) and not isinstance(inputs, list):
-        inputs = [inputs]
-    if targets is None:
-        targets = []
+    inputs = _ensure_is_list(inputs)
+    targets = _ensure_is_list(targets)
 
     node = cmds.createNode(node_type)
     for i, input in enumerate(inputs):
@@ -27,10 +25,7 @@ def _create_multi_input_math_node(node_type: str, inputs: list[Union[str, int, f
 
 
 def _create_xyz_input_math_node(node_type: str, inputX: Union[str, float, int]=0, inputY: Union[str, float, int]=0, inputZ: Union[str, float, int]=0, targets: list[str]=None):
-    if not isinstance(targets, tuple) and not isinstance(targets, list):
-        targets = [targets]
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
 
     node = cmds.creaeNode(node_type)
     for input, attr in zip((inputX, inputY, inputZ), ('inputX', 'inputY', 'inputZ')):
@@ -50,8 +45,7 @@ def _create_xyz_input_math_node(node_type: str, inputX: Union[str, float, int]=0
 
 
 def _create_dual_input_math_node(node_type: str, input1: Union[str, float, int], input2: Union[str, float, int], targets: list[str]=None):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
 
     node = cmds.createNode(node_type)
     for input, attr in zip((input1, input2), ('input1', 'input2')):
@@ -64,17 +58,17 @@ def _create_dual_input_math_node(node_type: str, input1: Union[str, float, int],
 
 
 def _create_single_input_math_node(node_type: str, input: Union[str, float, int, list[int]], targets: list[str]=None, in_matrix: bool=False):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
 
     node = cmds.createNode(node_type)
-    if isinstance(input, str):
-        cmds.connectAttr(input, f'{node}.input')
-    elif in_matrix:
-        in_attr = 'input' if cmds.objExists(f'{node}.input') else 'inMatrix'
-        cmds.setAttr(f'{node}.{in_attr}', input, type='matrix')
-    else:
-        cmds.setAttr(f'{node}.input', input)
+    if input:
+        if isinstance(input, str):
+            cmds.connectAttr(input, f'{node}.input')
+        elif in_matrix:
+            in_attr = 'input' if cmds.objExists(f'{node}.input') else 'inMatrix'
+            cmds.setAttr(f'{node}.{in_attr}', input, type='matrix')
+        else:
+            cmds.setAttr(f'{node}.input', input)
     
     for target in targets:
         output = 'output' if cmds.objExists(f'{node}.output') else 'outMatrix'
@@ -84,8 +78,7 @@ def _create_single_input_math_node(node_type: str, input: Union[str, float, int,
 
 
 def _set_xyz_outputs(node: str, targets: list[str], add_w_output: bool=False):
-    if targets is None:
-        return
+    targets = _ensure_is_list(targets)
     if isinstance(targets, str):
         targets = [targets]
 
@@ -101,6 +94,8 @@ def _set_xyz_outputs(node: str, targets: list[str], add_w_output: bool=False):
 
 
 def _connect_or_set_input_attr(node: str, source_attr: Union[str, int, float, list[int]], dest_attr: str, is_matrix: bool=False):
+    if source_attr is None or dest_attr is None:
+        return
     if isinstance(source_attr, str):
         cmds.connectAttr(source_attr, node + '.' + dest_attr)
     elif is_matrix:
@@ -108,6 +103,12 @@ def _connect_or_set_input_attr(node: str, source_attr: Union[str, int, float, li
     else:
         cmds.setAttr(node + '.' + dest_attr, source_attr)
 
+def _ensure_is_list(var: any):
+    if var is None:
+        return []
+    elif isinstance(var, str):
+        return [var]
+    return var
 ########## Comparison ##########
 
 def create_and_node(input: list[Union[str, int, float]], targets: list[str]=None):
@@ -237,8 +238,7 @@ def create_truncate_node(input: Union[str, float, int], targets: list[str]=None)
 ########## Matrix ##########
 
 def create_addMatrix_node(input: list[Union[str, int, float]], targets: list[str]=None):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
     node = _create_multi_input_math_node('addMatrix', input, matrix=True)
 
     for target in targets:
@@ -261,8 +261,7 @@ def create_aimMatrix_node(
     pre_space_matrix: Union[str, list[int]]=None, 
     post_space_matrix: Union[str, list[int]]=None
 ):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
     node = cmds.createNode('aimMatrix')
     _connect_or_set_input_attr(node, input_matrix, 'inputMatrix', is_matrix=True)
     _connect_or_set_input_attr(node, primary_target_matrix, 'primary.primaryTargetMatrix', is_matrix=True)
@@ -270,7 +269,7 @@ def create_aimMatrix_node(
     for i, axis in enumerate('XYZ'):
         _connect_or_set_input_attr(node, primary_input_axis[i], f'primaryInputAxis{axis}')
         _connect_or_set_input_attr(node, primary_target_vector[i], f'primaryTargetVector{axis}')
-        _connect_or_set_input_attr(node, secondary_input_axis[i], f'seocndaryInputAxis{axis}')
+        _connect_or_set_input_attr(node, secondary_input_axis[i], f'secondaryInputAxis{axis}')
         _connect_or_set_input_attr(node, secondary_target_vector[i], f'secondaryTargetVector{axis}')
     cmds.setAttr(f'{node}.primaryMode', primary_mode)
     cmds.setAttr(f'{node}.secondaryMode', secondary_mode)
@@ -294,8 +293,7 @@ def create_axisFromMatrix_node(input: Union[str, list[int]], targets: list[str]=
 def create_blendMatrix_node(input: Union[str, list[int]], target_matrix: Union[str, list[int]], targets: list[str]=None, pre_space_matrix: list[int]=None, post_space_matrix: list[int]=None):
     if not isinstance(target_matrix, list):
         target_matrix = [target_matrix]
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
 
     node = cmds.createNode('blendMatrix')
     _connect_or_set_input_attr(node, input, 'inputMatrix', is_matrix=True)
@@ -337,8 +335,7 @@ def create_decomposeMatrix_node(in_matrix: str, targets: list[str]=None, transla
     """
     Create and connect a decomposeMatrix node.
     """
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
     node = cmds.createNode("decomposeMatrix")
     cmds.connectAttr(in_matrix, f"{node}.inputMatrix")
     for target in targets:
@@ -370,8 +367,7 @@ def create_dotProduct_node(input1: list[Union[str, int, float]], input2: list[Un
 
 
 def create_fourByFourMatrix_node(inputs: list[Union[str, int]], targets: list[str]=None):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
     node = cmds.createNode('fourByFourMatrix')
     input_index = 0
     for i in range(4):
@@ -393,8 +389,7 @@ def create_holdMatrix_node(input: Union[str, list[int]], targets: list[str]=None
 
 
 def create_inverseMatrix_node(input: Union[str, list[int]], targets: list[str]=None):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
 
     node = cmds.createNode('inverseMatrix')
     _connect_or_set_input_attr(node, input, 'inputMatrix')
@@ -416,8 +411,7 @@ def create_multiplyPointByMatrix_node(inputs: list[Union[str, int, float]], matr
 
 
 def create_multiplyVectorByMatrix(inputs: list[Union[str, int, float]], matrix: Union[str, list[int]], targets: list[str]=None):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
     node = _create_single_input_math_node('multiplyVectorByMatrix', matrix, in_matrix=True)
     for input, xyz in zip(inputs, 'XYZ'):
         _connect_or_set_input_attr(node, input, f'input{xyz}')
@@ -449,8 +443,7 @@ def create_parentMatrix_node(
     pre_space_matrix: Union[str, list[int]]=None, 
     post_space_matrix: Union[str, list[int]]=None
 ):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
     node = cmds.createNode('parentMatrix')
     # single input attrs
     for source_attr, dest_attr in zip((in_matrix, 'inputMatrix'), (pre_space_matrix, 'preSpaceMatrix'), (post_space_matrix, 'postSpaceMatrix')):
@@ -478,8 +471,7 @@ def create_passMatrix_node(input: Union[str, list[int]], targets: list[str]=None
 
 
 def create_pickMatrix_node(in_matrix: Union[str, list[int]]=None, targets: list[str]=None, scale=True, rotate=True, translate=True, shear=True):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
 
     node = cmds.createNode('pickMatrix')
     cmds.setAttr(f'{node}.scale', scale)
@@ -567,8 +559,7 @@ def create_length_node(input: list[Union[str, int, float]], targets: list[str]=N
 
 
 def create_distanceBetween_node(start, end, targets: list[str]=None):
-    if targets is None:
-        targets = []
+    targets = _ensure_is_list(targets)
 
     node = cmds.createNode('distanceBetween')
     if isinstance(start, str):
@@ -588,6 +579,4 @@ def create_distanceBetween_node(start, end, targets: list[str]=None):
     for target in targets:
         cmds.connectAttr(f'{node}.distance', target)
     
-
     return node
-
